@@ -1,3 +1,7 @@
-*.pyc
-.git
 
+.git
+.idea
+.vscode
+
+*.out
+*.pyc
