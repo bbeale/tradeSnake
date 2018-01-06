@@ -1,63 +1,93 @@
-from poloniex import poloniex
 from botlog import BotLog
+import time, sys
+
 
 class BotTrade(object):
-	def __init__(self,pair,currentPrice,stopLoss):
-		self.output 	= BotLog()
-		self.status 	= "OPEN"
-		self.entryPrice = currentPrice
-		self.exitPrice 	= ""
-		self.output.log("Trade opened")
-		self.stopLossNumber = stopLoss
-		if (stopLoss) and (stopLoss > 0):
-			self.stopLoss = currentPrice - self.stopLossNumber
-		else:
-			self.stopLoss = stopLoss
-		self.diff = 0
-		
-		try:
-			self.conn = poloniex(
-				'43MX0MSE-MZ3ZU1MP-PFYZXQYO-JA6ZB105','02e0dd3dadf622debd4d2ce8d0d5c300d06cb145766aacbed0e9ea1a7658ae1aab4f0dbfb31d7b3a5fa60680f263e56cdeec15b670d3b40651efa2b0c86d8135')
-			self.orderNumber = self.conn.buy(pair, currentPrice, 1)
-		except:
-			self.conn = None
-	
-	def close(self,currentPrice):
-		self.status 	= "CLOSED"
-		self.exitPrice 	= currentPrice
-		self.output.log("Trade closed")
-		self.diff 		= self.exitPrice - self.entryPrice
 
-	def tick(self, currentPrice):
-		if ( self.stopLoss > 0):
+    def __init__(self, conn, pair, currentPrice, tradeAmount, stopLoss):
 
-			print self.stopLoss, "Greater than zero?", (self.stopLoss > 0)
+        self.conn = conn
+        self.tradeOpenTime 	= float(time.time())
+        self.tradeCloseTime = None  # don't know if I need this yet
+        self.elapsedTime 	= None
+        self.output 		= BotLog()
+        self.status 		= "OPEN"
+        self.fee_buy 		= 0.25
+        self.fee_sell 		= 0.15
+        self.entryPrice 	= currentPrice
+        self.tradeAmount	= tradeAmount
+        self.exitPrice 		= ""
+        self.output.log("Trade opened at {}".format(str(self.tradeOpenTime)))  # convert this for display
+        self.stopLossNumber = stopLoss
+        self.pair 			= pair
+        self.orderNumber    = 0
 
-			print "current=", currentPrice, "stop loss=", self.stopLoss, "closing?", (currentPrice < self.stopLoss)
+        if stopLoss > 0:
+            self.stopLoss = currentPrice - self.stopLossNumber
+        else:
+            self.stopLoss = stopLoss
+        self.diff = 0
 
-			if self.stopLoss == 0:
-				return
+        try:
+            self.orderNumber = self.conn.buy(self.pair, currentPrice, tradeAmount)
+            print "Order#:", self.orderNumber
+        except:
+            self.output.log("Can't connect to API")
+            sys.exit(-1)
 
-			if ( currentPrice > self.stopLoss):
-				self.stopLoss = currentPrice - self.stopLossNumber
-				print "new stoploss=", self.stopLoss
+    def close(self, pair, currentPrice, sellAmount):
+        try:
+            self.conn.sell(pair, currentPrice, sellAmount)
+        except:
+            self.output.log("Can't connect to API")
+            sys.exit(-1)
 
-			if ( currentPrice < self.stopLoss):
-				self.close(currentPrice)
+        self.status 	= "CLOSED"
+        self.exitPrice 	= currentPrice
+        self.output.log("Trade closed")
+        self.diff 		= self.exitPrice - self.entryPrice
 
-	def showTrade(self):
-		tradeStatus = "Entry Price: "+str(self.entryPrice)+"\tStatus: "+str(self.status)+" Exit Price: "+str(self.exitPrice)
+    def cancelOldTrade(self):
+        try:
+            self.conn.cancel(self.pair, self.orderNumber)
+        except:
+            self.output.log("Can't connect to API... Please login to exchange and cancel trade manually")
+            sys.exit(-1)
 
-		if (self.status == "CLOSED"):
-			tradeStatus = tradeStatus + " Profit: "
-			if (self.exitPrice > self.entryPrice):
-				tradeStatus = tradeStatus + "\033[92m"
-			else:
-				tradeStatus = tradeStatus + "\033[91m"
+        self.status 	= "CANCELED"
+        self.output.log("Trade canceled")
 
-			tradeStatus = tradeStatus+str(self.exitPrice - self.entryPrice)+"\033[0m"
+    def tick(self, currentPrice):
 
-		self.output.log(tradeStatus)
+        now = float(time.time())  # subtract start from now to get
+        self.elapsedTime = now - self.tradeOpenTime
+        self.output.log("Trade time elapsed:" +str(self.elapsedTime))
 
-	def getMargin(self):
-		return self.margin
+        # if self.elapsedTime > 90 and self.status == "OPEN":
+        #     self.cancelOldTrade()
+        #     return
+
+        if self.stopLoss > 0:
+
+            if self.stopLoss == 0:
+                return
+
+            if currentPrice > self.stopLoss:
+                self.stopLoss = currentPrice - self.stopLossNumber
+
+    def showTrade(self):
+        tradeStatus = "Entry Price: "+str(self.entryPrice)+"\tStatus: "+str(self.status)+" Exit Price: "+str(self.exitPrice)
+
+        if self.status == "CLOSED":
+            tradeStatus = tradeStatus + " Profit: "
+            if self.exitPrice > self.entryPrice:
+                tradeStatus = tradeStatus + "\033[92m"
+            else:
+                tradeStatus = tradeStatus + "\033[91m"
+
+            tradeStatus = tradeStatus+str(self.exitPrice - self.entryPrice)+"\033[0m"
+
+        self.output.log(tradeStatus)
+
+    def getMargin(self):
+        return self.margin
