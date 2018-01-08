@@ -58,7 +58,6 @@ class BotStrategy(object):
         self.prices.append(self.currentPrice)
 
         self.signal         = self.indicators.signal(self.macdPrices, 9)
-        p                   = -(27 * 300)
         self.macd           = self.indicators.MACD(self.macdPrices[-(27 * 300):])
 
         self.macds.append(self.macd)
@@ -81,7 +80,7 @@ class BotStrategy(object):
 
     def evaluatePositions(self):
 
-        # TODO: deprecate that garbage below and use the API to get open trades...
+        # TODO: deprecate that garbage below and use the API to get a list of open trades...
         # ...like we should have from the start...
         #
         # openTrades = []

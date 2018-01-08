@@ -9,10 +9,20 @@ from botcandlestick import BotCandlestick
 
 def main(argv):
 
-    """ TODO: Parameterize these as cli args.
-    Make startTime take a datetime input and then convert
-    to timestamp and calculate endTime on the fly """
+    # TODO: Secure neehsup
+    # TODO: Set up SSH on neehsup
+    # TODO: Fix backtesting functionality
+    # TODO: Factor transaction fees into buy/sell amounts
+    # TODO: Create a bot that will listen for take profit point and close a trade that I open manually
+    # TODO: Get an idea of trend direction by storing and examining the last 3 (4?) ticks
+    # TODO: Fix current MACD indicator or else get it from somewhere else (ta-lib?)
+    # TODO: UNIT. FUCKING. TESTS.
 
+    """
+    Make startTime take a datetime input and then convert
+    to timestamp and calculate endTime on the fly
+    """
+    # TODO: Parameterize these as cli args.
     period = 300
     pair = "BTC_ETH"
     now = float(time.time())
@@ -46,13 +56,13 @@ def main(argv):
         elif opt in "-e":
             endTime = arg
 
-    if backTest:
-        chart = BotChart("poloniex", pair, period, now=endTime, earlier=startTime)
-        strategy = BotStrategy(chart.conn, pair, period, stopLossAmount, backTest, now)
-
-        for candlestick in chart.getPoints():
-            print type(candlestick.current)
-            strategy.tick(candlestick, chart.getBalances(pair))
+    # if backTest:
+    #     chart = BotChart("poloniex", pair, period, now=endTime, earlier=startTime)
+    #     strategy = BotStrategy(chart.conn, pair, period, stopLossAmount, backTest, now)
+    #
+    #     for candlestick in chart.getPoints():
+    #         print type(candlestick.current)
+    #         strategy.tick(candlestick, chart.getBalances(pair))
 
     else:
         chart = BotChart("poloniex", pair, period, now, False)
@@ -75,7 +85,6 @@ def main(argv):
         if developingCandlestick.isClosed():
             candlesticks.append(developingCandlestick)
             balances = chart.getBalances(pair)
-            print "BTC: ", balances[0], "Other: ", balances[1]
             strategy.tick(developingCandlestick, balances)
             developingCandlestick = BotCandlestick(period, now)
 
