@@ -43,9 +43,10 @@ def main(args):
     indicators      = BotIndicators()
     holding         = True
 
+    logging.info("Starting bot at {} trading {}".format(str(time.time()), pair))
     if balances[0] == 0 and balances[1] == 0:
-        m = "Insufficient funds for trading"; print m
-        logging.warn(m)
+        print "Insufficient funds for trading"
+        logging.warn("Insufficient funds for trading")
         sys.exit(-1)
 
     while holding:
@@ -55,13 +56,12 @@ def main(args):
         historicPrices  = getHistoricPrices(pair, earlier, now)
         macd            = indicators.MACD(historicPrices)
 
-        currentPrice = float(conn.api_query("returnTicker")[pair]["last"])
-        highestBid = float(conn.api_query("returnTicker")[pair]["highestBid"])
+        currentPrice    = float(conn.api_query("returnTicker")[pair]["last"])
+        highestBid      = float(conn.api_query("returnTicker")[pair]["highestBid"])
+
         os.system("clear")
         m = "Timestamp:\t\t{}\n\nBalance:\t\t{}\nCurrent Price:\t\t{}\nHighest Bid:\t\t{}".format(str(now),
-                                                                                        str(balances[1]),
-                                                                                        str(currentPrice),
-                                                                                        str(highestBid))
+                                                            str(balances[1]),str(currentPrice),str(highestBid))
         print m
         logging.info(m)
 
@@ -73,11 +73,12 @@ def main(args):
                 holding = False
                 s = "Sold:\t\t{}\t{}\nAt:\t\t{}".format(str(balances[1]),
                                                     str(pair.split("_")[1]),
-                                                    str(highestBid)); print s
+                                                    str(highestBid))
+                print s
                 logging.info(s)
             except:
-                e = "Trade execution failed"; print e
-                logging.error(e)
+                print "Trade execution failed"
+                logging.error("Trade execution failed")
                 sys.exit(-1)
 
         time.sleep(5)
