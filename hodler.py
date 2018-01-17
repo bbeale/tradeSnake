@@ -44,8 +44,8 @@ def main(args):
     holding         = True
 
     if balances[0] == 0 and balances[1] == 0:
-        m = "Insufficient funds for trading"
-        print m, logging.warn(m)
+        m = "Insufficient funds for trading"; print m
+        logging.warn(m)
         sys.exit(-1)
 
     while holding:
@@ -62,7 +62,8 @@ def main(args):
                                                                                         str(balances[1]),
                                                                                         str(currentPrice),
                                                                                         str(highestBid))
-        print m, logging.info(m)
+        print m
+        logging.info(m)
 
         if highestBid >= takeProfit:  # or highestBid <= stopLoss:
             try:
@@ -70,11 +71,13 @@ def main(args):
                           highestBid,
                           balances[1])
                 holding = False
-                s = "Sold:\t\t{}\t{}\nAt:\t\t{}".format(str(balances[1]), str(pair.split("_")[1]), str(highestBid))
-                print s, logging.info(s)
+                s = "Sold:\t\t{}\t{}\nAt:\t\t{}".format(str(balances[1]),
+                                                    str(pair.split("_")[1]),
+                                                    str(highestBid)); print s
+                logging.info(s)
             except:
-                e = "Trade execution failed"
-                print e, logging.error(e)
+                e = "Trade execution failed"; print e
+                logging.error(e)
                 sys.exit(-1)
 
         time.sleep(5)
