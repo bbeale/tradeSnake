@@ -2,7 +2,7 @@ from poloniex import poloniex
 from botlog import BotLog
 from botindicators import BotIndicators
 from pprint import PrettyPrinter
-import time, os, sys, urllib, urllib2, json, numpy
+import time, os, sys, logging, urllib, urllib2, json, numpy, datetime
 # from talib import abstract
 
 # TODO: Make hodler.py use BotLog()
@@ -10,6 +10,9 @@ import time, os, sys, urllib, urllib2, json, numpy
 
 conn = poloniex(os.environ["POLONIEX_KEY"], os.environ["POLONIEX_SECRET"])
 pp = PrettyPrinter(indent=2)
+logging.basicConfig(filename='bot_activity.log',
+                    format='%(message)s',
+                    level=logging.DEBUG)
 usage = \
     """USAGE:
 1) Open a trade on the Poloniex exchange (https://poloniex.com/)
@@ -37,25 +40,29 @@ def main(args):
     pair            = args[0]
     takeProfit      = args[1]
     balances        = getBalances(pair)
+    indicators      = BotIndicators()
+    holding         = True
 
     if balances[0] == 0 and balances[1] == 0:
-        print "Insufficient funds for trading"
+        m = "Insufficient funds for trading"
+        print m, logging.warn(m)
         sys.exit(-1)
-
-    now             = float(time.time())
-    earlier         = str(now - (86400 * 30))
-    historicPrices  = getHistoricPrices(pair, earlier, now)
-    holding         = True
-    indicators      = BotIndicators()
-    macd            = indicators.MACD(historicPrices)
 
     while holding:
 
+        now             = float(time.time())
+        earlier         = str(now - (86400 * 30))
+        historicPrices  = getHistoricPrices(pair, earlier, now)
+        macd            = indicators.MACD(historicPrices)
+
         currentPrice = float(conn.api_query("returnTicker")[pair]["last"])
         highestBid = float(conn.api_query("returnTicker")[pair]["highestBid"])
-        print "Balance:\t\t{}\t\tCurrent:\t\t{}\t\tHighest Bid:\t\t{}".format(str(balances[1]),
-                                                                           str(currentPrice),
-                                                                           str(highestBid))
+        os.system("clear")
+        m = "Timestamp:\t\t{}\n\nBalance:\t\t{}\nCurrent Price:\t\t{}\nHighest Bid:\t\t{}".format(str(now),
+                                                                                        str(balances[1]),
+                                                                                        str(currentPrice),
+                                                                                        str(highestBid))
+        print m, logging.info(m)
 
         if highestBid >= takeProfit:  # or highestBid <= stopLoss:
             try:
@@ -63,8 +70,11 @@ def main(args):
                           highestBid,
                           balances[1])
                 holding = False
+                s = "Sold:\t\t{}\t{}\nAt:\t\t{}".format(str(balances[1]), str(pair.split("_")[1]), str(highestBid))
+                print s, logging.info(s)
             except:
-                print "Trade execution failed"
+                e = "Trade execution failed"
+                print e, logging.error(e)
                 sys.exit(-1)
 
         time.sleep(5)
@@ -88,5 +98,6 @@ def getHistoricPrices(pair, start, end):
 
 
 if __name__ == "__main__":
+    os.system("clear")
     print "TRADE AT YOUR OWN RISK!!!\n\nI claim absolutely no responsibility for any money you lose\n"
     main(sys.argv[1:])
