@@ -5,26 +5,30 @@ from botlog import BotLog
 
 class BotCandlestick(object):
 
-    def __init__(self, period, now, open=None, close=None, high=None, low=None, priceAverage=None):
+    def __init__(self, period, timeStamp, open=None, close=None, high=None, low=None, backTest=False):
 
-        self.current = None
-        self.lowestAsk = None
-        self.highestBid = None
-        self.open = open
-        self.close = close
-        self.high = high
-        self.low = low
-        self.now = now
-        self.period = period
-        self.output = BotLog()
-        self.priceAverage = priceAverage
-        self.diff = None
-        self.diffp = None
+        self.current        = None
+        self.lowestAsk      = None
+        self.highestBid     = None
+        self.open           = open
+        self.close          = close
+        self.high           = high
+        self.low            = low
+        self.now            = None
+        self.timeStamp      = timeStamp
+        self.backTest       = backTest
+        self.period         = period
+        self.output         = BotLog()
+        self.priceAverage   = None
+        self.diff           = None
+        self.diffp          = None
 
     def tick(self, price, lowestAsk, highestBid):
-        self.current = float(price)
-        self.lowestAsk = float(lowestAsk)
-        self.highestBid = float(highestBid)
+
+        self.now            = self.timeStamp
+        self.current        = float(price)
+        self.lowestAsk      = float(lowestAsk)
+        self.highestBid     = float(highestBid)
 
         if self.open is None:
             self.open = self.current
@@ -35,7 +39,7 @@ class BotCandlestick(object):
         if (self.low is None) or (self.current < self.low):
             self.low = self.current
 
-        if time.time() >= (self.now + self.period):
+        if self.now >= (self.timeStamp + self.period):
             self.close = self.current
             self.priceAverage = (self.high + self.low + self.close) / float(3)
 

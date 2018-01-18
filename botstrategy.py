@@ -6,18 +6,26 @@ import time, sys
 
 class BotStrategy(object):
 
-    def __init__(self, conn, pair, period, stopLoss, backTest, startTime):
+    def __init__(self, conn, pair, period, stopLoss, takeProfit,
+                 backTest=False,
+                 startTime=None,
+                 endTime=None):
 
         self.conn           = conn
         self.pair           = pair
         self.period         = period
         self.stopLoss       = stopLoss
+        self.takeProfit     = takeProfit
+
+        # For backtesting
         self.backTest       = backTest
         self.startTime      = startTime
-        self.currentTime    = self.startTime
+        self.endTime        = endTime
+
+        # For indicators
+        self.currentTime    = None
         self.earlier        = None
         self.indicators     = BotIndicators()
-        self.output         = BotLog()
         self.prices         = []
         self.macdPrices     = []
         self.closes         = []  # Needed for Momentum Indicator
@@ -43,17 +51,27 @@ class BotStrategy(object):
         self.profitable     = False
         self.buyTrigger     = float(-.2)
         self.sellTrigger    = float(.1)
-        self.takeProfit     = float(.45)  # abstract this value
+
+        self.output         = BotLog()
 
     def tick(self, candlestick, balances):
 
-        self.currentTime    = float(time.time())
-        self.earlier        = self.currentTime - (86400 * 30)
+        if self.backTest:
+            self.currentTime    = candlestick.timeStamp
+            self.earlier        = self.currentTime - (86400 * 30)
+            self.currentPrice   = float(candlestick.close)
+            self.lowestAsk      = float(candlestick.low)
+            self.highestBid     = float(candlestick.high)
+
+        else:
+            self.currentTime    = float(time.time())
+            self.earlier        = self.currentTime - (86400 * 30)
+            self.currentPrice   = float(candlestick.current)
+            self.lowestAsk      = float(candlestick.lowestAsk)
+            self.highestBid     = float(candlestick.highestBid)
+
         self.macdPrices     = self.getHistoricPrices(self.earlier, self.currentTime)
         self.movingAvg      = self.indicators.movingAverage(self.prices, 15)
-        self.currentPrice   = float(candlestick.current)
-        self.lowestAsk      = float(candlestick.lowestAsk)
-        self.highestBid     = float(candlestick.highestBid)
 
         self.prices.append(self.currentPrice)
 
@@ -62,8 +80,8 @@ class BotStrategy(object):
 
         self.macds.append(self.macd)
 
-        print len(self.macdPrices)
-        print len(self.macdPrices[-(27 * 300):])
+        # print len(self.macdPrices)
+        # print len(self.macdPrices[-(27 * 300):])
 
         self.maDiff = self.percentDiff(self.lowestAsk,  # + (self.lowestAsk * .025), # <<== Fee calculation
                                        self.movingAvg)
@@ -76,48 +94,48 @@ class BotStrategy(object):
         self.showPositions()
 
         self.output.log("Price: " + str(candlestick.current) + "\tMoving Average: " + str(
-            self.movingAvg) + "\t Price/MA Variance: " + str(self.maDiff) + "\tMACD: " + str(self.macd[0][2]))
+            self.movingAvg) + "\t Price/MA Variance: " + str(self.maDiff) + "\tMACD: " + str(self.macd[0]))
 
     def evaluatePositions(self):
 
         # TODO: deprecate that garbage below and use the API to get a list of open trades...
         # ...like we should have from the start...
+        openTrades = []
+        for trade in self.trades:
+            if trade.status == "OPEN":
+                openTrades.append(trade)
+
+        if len(openTrades) < self.numSimulTrades:
+            if (self.lowestAsk < self.movingAvg) \
+                    and (self.maDiff < self.buyTrigger):
+
+                self.trades.append(BotTrade(self.conn,
+                                            self.pair,
+                                            self.currentPrice,
+                                            self.amountToTrade,
+                                            self.stopLoss,
+                                            self.backTest))
+
+        # # Trying the trades list a different way
+        # try:
+        #     ot = self.conn.returnOpenOrders(self.pair)
+        #     self.output.log("Orders:\t{}\t{}".format(str(ot), str(len(ot))))
+        # except:
+        #     self.output.log("Can't connect to API")
+        #     sys.exit(-1)
         #
-        # openTrades = []
-        # for trade in self.trades:
-        #     if trade.status == "OPEN":
-        #         openTrades.append(trade)
-        #
-        # if len(openTrades) < self.numSimulTrades:
+        # while len(ot) < self.numSimulTrades:
         #     if (self.lowestAsk < self.movingAvg) \
         #             and (self.maDiff < self.buyTrigger):
-        #
         #         self.trades.append(BotTrade(self.conn,
         #                                     self.pair,
         #                                     self.currentPrice,
         #                                     self.amountToTrade,
         #                                     self.stopLoss))
         #
-        # for trade in openTrades:
+        # for trade in ot:
 
-        # Trying the trades list a different way
-        try:
-            ot = self.conn.returnOpenOrders(self.pair)
-            self.output.log("Orders:\t{}\t{}".format(str(ot), str(len(ot))))
-        except:
-            self.output.log("Can't connect to API")
-            sys.exit(-1)
-
-        while len(ot) < self.numSimulTrades:
-            if (self.lowestAsk < self.movingAvg) \
-                    and (self.maDiff < self.buyTrigger):
-                self.trades.append(BotTrade(self.conn,
-                                            self.pair,
-                                            self.currentPrice,
-                                            self.amountToTrade,
-                                            self.stopLoss))
-
-        for trade in ot:
+        for trade in openTrades:
 
             self.margin = self.percentDiff(self.highestBid,     # - (self.highestBid * .025), # <<== Fee calculation
                                            trade.entryPrice)

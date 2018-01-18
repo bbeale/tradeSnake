@@ -4,7 +4,7 @@ from botcandlestick import BotCandlestick
 
 
 class BotChart(object):
-    def __init__(self, exchange, pair, period, now, backtest=True, earlier=None):
+    def __init__(self, exchange, pair, period, backtest, now, earlier=None):
 
         self.pair = pair
         self.period = period
@@ -25,13 +25,16 @@ class BotChart(object):
 
             if backtest:
                 poloData = self.conn.api_query("returnChartData",
-                                               {"currencyPair": self.pair, "start": self.earlier, "end": self.now,
+                                               {"currencyPair": self.pair,
+                                                "start": self.earlier,
+                                                "end": self.now,
                                                 "period": self.period})
+
                 for datum in poloData:
                     if datum['open'] and datum['close'] and datum['high'] and datum['low']:
                         self.data.append(
-                            BotCandlestick(self.period, datum['open'], datum['close'], datum['high'], datum['low'],
-                                           datum['weightedAverage']))
+                            BotCandlestick(self.period,
+                                           datum['date'], datum['open'], datum['close'], datum['high'], datum['low'], backtest))
 
         if (exchange == "bittrex"):
             if backtest:

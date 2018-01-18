@@ -9,7 +9,6 @@ from botcandlestick import BotCandlestick
 
 def main(args):
 
-    # TODO: Fix backtesting functionality
     # TODO: Factor transaction fees into buy/sell amounts
     # TODO: Get an idea of trend direction by storing and examining the last 3 (4?) ticks
     # TODO: Fix current MACD indicator or else get it from somewhere else (ta-lib?)
