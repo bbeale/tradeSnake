@@ -5,7 +5,6 @@ from pprint import PrettyPrinter
 import time, os, sys, logging, urllib, urllib2, json, numpy, datetime
 # from talib import abstract
 
-# TODO: Make hodler.py use BotLog()
 # TODO: Add email notifications for trade failure and success
 
 conn = poloniex(os.environ["POLONIEX_KEY"], os.environ["POLONIEX_SECRET"])
@@ -60,12 +59,12 @@ def main(args):
         highestBid      = float(conn.api_query("returnTicker")[pair]["highestBid"])
 
         os.system("clear")
-        m = "Timestamp:\t\t{}\n\nBalance:\t\t{}\nCurrent Price:\t\t{}\nHighest Bid:\t\t{}".format(str(now),
+        print "Timestamp:\t\t{}\n\nBalance:\t\t{}\nCurrent Price:\t\t{}\nHighest Bid:\t\t{}".format(str(now),
                                                             str(balances[1]),str(currentPrice),str(highestBid))
-        print m
-        logging.info(m)
+        logging.info("Timestamp:\t\t{}\tBalance:\t\t{}\tCurrent Price:\t\t{}\tHighest Bid:\t\t{}".format(str(now),
+                                                            str(balances[1]),str(currentPrice),str(highestBid)))
 
-        if highestBid >= takeProfit:  # or highestBid <= stopLoss:
+        if highestBid >= takeProfit:  # or highestBid <= 0.00014:
             try:
                 conn.sell(pair,
                           highestBid,
