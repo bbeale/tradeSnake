@@ -7,66 +7,71 @@ from botstrategy import BotStrategy
 from botcandlestick import BotCandlestick
 
 
-def main(argv):
+def main(args):
 
-    # TODO: Secure neehsup
-    # TODO: Set up SSH on neehsup
     # TODO: Fix backtesting functionality
     # TODO: Factor transaction fees into buy/sell amounts
-    # TODO: Create a bot that will listen for take profit point and close a trade that I open manually
     # TODO: Get an idea of trend direction by storing and examining the last 3 (4?) ticks
     # TODO: Fix current MACD indicator or else get it from somewhere else (ta-lib?)
     # TODO: UNIT. FUCKING. TESTS.
+    # TODO: Add bollinger bands and RSI indicators to trading strategy
 
+    usage = """
+    Usage:
+
+        python bot.py [currency pair] [stop loss] [take profit]
+
+        Stop loss may be zero, take profit may not.
+
+        Valid currency pairs:
+        
+        BTC                 BTC_ETH
+                            BTC_LTC
+                            BTC_XRP
+                            BTC_BCH
+                            BTC_ZEC
+                            BTC_DASH
+                            BTC_XMR
+
+        ETH                 ETH_REP
+                            ETH_BCH
+                            ETH_ZEC
+        
+        XMR (Monero)        XMR_LTC
+                            XMR_ZEC
+                            XMR_DASH
+        
+        Tether              USDT_BTC
+                            USDT_ETH
+                            USDT_XRP
+                            USDT_BCH
+                            USDT_LTC             
     """
-    Make startTime take a datetime input and then convert
-    to timestamp and calculate endTime on the fly
-    """
-    # TODO: Parameterize these as cli args.
-    period = 300
-    pair = "BTC_ETH"
-    now = float(time.time())
-    backTest = False
-    startTime = 1513296000
-    endTime = 1513490400
-    stopLossAmount = 0  # 0.005
 
-    try:
-        opts, args = getopt.getopt(argv, "hp:c:n:s:e:", ["period=", "currency=", "points="])
-    except getopt.GetoptError:
-        print 'trading-bot.py -p <period length> -c <currency pair> -n <period of moving average>'
-        sys.exit(2)
+    pairs = ["BTC_ETH", "BTC_LTC", "BTC_XRP", "BTC_BCH", "BTC_ZEC", "BTC_DASH",
+             "BTC_XMR", "ETH_REP", "ETH_BCH", "ETH_ZEC", "XMR_LTC", "XMR_ZEC",
+             "XMR_DASH", "USDT_BTC", "USDT_ETH", "USDT_XRP", "USDT_BCH", "USDT_LTC"]
 
-    for opt, arg in opts:
-        if opt == '-h':
-            print 'trading-bot.py -p <period length> -c <currency pair> -n <period of moving average>'
-            sys.exit()
-        elif opt in ("-p", "--period"):
-            if int(arg) in [300, 900, 1800, 7200, 14400, 86400]:
-                period = arg
-            else:
-                print 'Poloniex requires periods in 300,900,1800,7200,14400, or 86400 second increments'
-                sys.exit(2)
-        elif opt in ("-c", "--currency"):
-            pair = arg
-        elif opt in ("-n", "--points"):
-            lengthOfMA = int(arg)
-        elif opt in "-s":
-            startTime = arg
-        elif opt in "-e":
-            endTime = arg
-
-    # if backTest:
-    #     chart = BotChart("poloniex", pair, period, now=endTime, earlier=startTime)
-    #     strategy = BotStrategy(chart.conn, pair, period, stopLossAmount, backTest, now)
-    #
-    #     for candlestick in chart.getPoints():
-    #         print type(candlestick.current)
-    #         strategy.tick(candlestick, chart.getBalances(pair))
-
+    if len(args) != 3:
+        print usage
+        sys.exit(-1)
+    if args[0] not in pairs:
+        print usage
+        sys.exit(-1)
+    if args[2] <= 0:
+        print "Take profit must be greater than zero"
+        print usage
+        sys.exit(-1)
     else:
-        chart = BotChart("poloniex", pair, period, now, False)
-        strategy = BotStrategy(chart.conn, pair, period, stopLossAmount, backTest, now)
+
+        period          = 300
+        now             = float(time.time())
+        pair            = args[0]
+        stopLossAmount  = float(args[1])
+        takeProfit      = float(args[2])
+
+    chart = BotChart("poloniex", pair, period, now, False)
+    strategy = BotStrategy(chart.conn, pair, period, stopLossAmount, takeProfit, now)
 
     candlesticks = []
     developingCandlestick = BotCandlestick(period, now)
