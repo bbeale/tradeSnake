@@ -26,7 +26,7 @@ pairs = ["BTC_ETH", "BTC_LTC", "BTC_XRP", "BTC_BCH", "BTC_ZEC", "BTC_DASH",
 
 def main(args):
 
-    if len(args) != 2:
+    if len(args) < 2 or len(args) > 3:
         print usage
         sys.exit(-1)
     if args[0] not in pairs:
@@ -35,6 +35,10 @@ def main(args):
     if args[1] <= 0:
         print usage
         sys.exit(-1)
+    if len(args) == 3 and args[2] > 0:
+        stopLoss = args[2]
+    elif len(args) == 3 and args[2] <= 0:
+        stopLoss = None
 
     pair            = args[0]
     takeProfit      = args[1]
@@ -59,26 +63,70 @@ def main(args):
         highestBid      = float(conn.api_query("returnTicker")[pair]["highestBid"])
 
         os.system("clear")
-        print "Timestamp:\t\t{}\n\nBalance:\t\t{}\nCurrent Price:\t\t{}\nHighest Bid:\t\t{}".format(str(now),
-                                                            str(balances[1]),str(currentPrice),str(highestBid))
+        m = """
+
+                Timestamp:\t\t\t{}
+
+
+                Pair:\t\t\t\t{}
+
+
+                Balance:\t\t\t{}
+
+
+                Current Price:\t\t{}
+
+
+                Highest Bid:\t\t{}
+
+
+                Take Profit:\t\t{}
+
+
+                Stop Loss:\t\t\t{}
+
+            """.format(str(
+                datetime.datetime.fromtimestamp(
+                    int(now)).strftime('%Y-%m-%d\t\t%H:%M:%S')
+                ), pair, str(balances[1]), str(currentPrice), str(highestBid),
+                    str(takeProfit), str(stopLoss))
+
         logging.info("Timestamp:\t\t{}\tBalance:\t\t{}\tCurrent Price:\t\t{}\tHighest Bid:\t\t{}".format(str(now),
                                                             str(balances[1]),str(currentPrice),str(highestBid)))
 
-        if highestBid >= takeProfit:  # or highestBid <= 0.00014:
-            try:
-                conn.sell(pair,
-                          highestBid,
-                          balances[1])
-                holding = False
-                s = "Sold:\t\t{}\t{}\nAt:\t\t{}".format(str(balances[1]),
-                                                    str(pair.split("_")[1]),
-                                                    str(highestBid))
-                print s
-                logging.info(s)
-            except:
-                print "Trade execution failed"
-                logging.error("Trade execution failed")
-                sys.exit(-1)
+        if stopLoss is not None:
+            if highestBid >= takeProfit or highestBid <= stopLoss:
+                try:
+                    conn.sell(pair,
+                              highestBid,
+                              balances[1])
+                    holding = False
+                    s = "Sold:\t\t{}\t{}\nAt:\t\t{}".format(str(balances[1]),
+                                                        str(pair.split("_")[1]),
+                                                        str(highestBid))
+                    print s
+                    logging.info(s)
+                except:
+                    print "Trade execution failed"
+                    logging.error("Trade execution failed")
+                    sys.exit(-1)
+
+        else:
+            if highestBid >= takeProfit:
+                try:
+                    conn.sell(pair,
+                              highestBid,
+                              balances[1])
+                    holding = False
+                    s = "Sold:\t\t{}\t{}\nAt:\t\t{}".format(str(balances[1]),
+                                                        str(pair.split("_")[1]),
+                                                        str(highestBid))
+                    print s
+                    logging.info(s)
+                except:
+                    print "Trade execution failed"
+                    logging.error("Trade execution failed")
+                    sys.exit(-1)
 
         time.sleep(5)
 
