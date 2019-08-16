@@ -1,7 +1,7 @@
-import sys, getopt
+import sys
 
-from botchart import BotChart
-from botstrategy import BotStrategy
+from src.botchart import BotChart
+from src.botstrategy import BotStrategy
 
 
 def main(args):
@@ -41,10 +41,10 @@ def main(args):
              "XMR_DASH", "USDT_BTC", "USDT_ETH", "USDT_XRP", "USDT_BCH", "USDT_LTC"]
 
     if len(args) != 3:
-        print usage
+        print(usage)
         sys.exit(-1)
     if args[0] not in pairs:
-        print usage
+        print(usage)
         sys.exit(-1)
     else:
         period          = 300

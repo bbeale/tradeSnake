@@ -1,8 +1,11 @@
-from poloniex import poloniex
-from botlog import BotLog
-from botindicators import BotIndicators
+from lib.poloniex import poloniex
+from src.botindicators import BotIndicators
 from pprint import PrettyPrinter
-import time, os, sys, logging, urllib, urllib2, json, numpy, datetime
+import os
+import sys
+import time
+import logging
+
 # from talib import abstract
 
 # TODO: Add email notifications for trade failure and success
@@ -27,13 +30,13 @@ pairs = ["BTC_ETH", "BTC_LTC", "BTC_XRP", "BTC_BCH", "BTC_ZEC", "BTC_DASH",
 def main(args):
 
     if len(args) != 2:
-        print usage
+        print(usage)
         sys.exit(-1)
     if args[0] not in pairs:
-        print usage
+        print(usage)
         sys.exit(-1)
     if args[1] <= 0:
-        print usage
+        print(usage)
         sys.exit(-1)
 
     pair            = args[0]
@@ -44,7 +47,7 @@ def main(args):
 
     logging.info("Starting bot at {} trading {}".format(str(time.time()), pair))
     if balances[0] == 0 and balances[1] == 0:
-        print "Insufficient funds for trading"
+        print("Insufficient funds for trading")
         logging.warn("Insufficient funds for trading")
         sys.exit(-1)
 
@@ -59,8 +62,8 @@ def main(args):
         highestBid      = float(conn.api_query("returnTicker")[pair]["highestBid"])
 
         os.system("clear")
-        print "Timestamp:\t\t{}\n\nBalance:\t\t{}\nCurrent Price:\t\t{}\nHighest Bid:\t\t{}".format(str(now),
-                                                            str(balances[1]),str(currentPrice),str(highestBid))
+        print("Timestamp:\t\t{}\n\nBalance:\t\t{}\nCurrent Price:\t\t{}\nHighest Bid:\t\t{}".format(str(now),
+                                                            str(balances[1]),str(currentPrice),str(highestBid)))
         logging.info("Timestamp:\t\t{}\tBalance:\t\t{}\tCurrent Price:\t\t{}\tHighest Bid:\t\t{}".format(str(now),
                                                             str(balances[1]),str(currentPrice),str(highestBid)))
 
@@ -73,10 +76,10 @@ def main(args):
                 s = "Sold:\t\t{}\t{}\nAt:\t\t{}".format(str(balances[1]),
                                                     str(pair.split("_")[1]),
                                                     str(highestBid))
-                print s
+                print(s)
                 logging.info(s)
             except:
-                print "Trade execution failed"
+                print("Trade execution failed")
                 logging.error("Trade execution failed")
                 sys.exit(-1)
 
@@ -102,5 +105,5 @@ def getHistoricPrices(pair, start, end):
 
 if __name__ == "__main__":
     os.system("clear")
-    print "TRADE AT YOUR OWN RISK!!!\n\nI claim absolutely no responsibility for any money you lose\n"
+    print("TRADE AT YOUR OWN RISK!!!\n\nI claim absolutely no responsibility for any money you lose\n")
     main(sys.argv[1:])
