@@ -1,6 +1,6 @@
 # README
 
-## This bot is not currently functional
+## This bot is not currently functional! A rebuilt/heavily updated bot is coming soon in another repo
 Presently I am working on expanding and enhancing the indicators so their values can serve as data points to use for feature engineering a financial data set. 
 
 Additional modifications planned include upgrading completely to Python 3 (and no more urllib2!), switching completely from the bastardized Poloniex API wrapper I was using to the one on PyPI, getting set up on other exchanges in addition to Poloniex.
